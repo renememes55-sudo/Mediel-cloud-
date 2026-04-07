@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Login - Farmácia Hospitalar</title>
+<style>
+/* RESET E FONTES */
+body, html { margin:0; padding:0; font-family:'Segoe UI', Tahoma, sans-serif; background:#f5f6fa; height:100%; }
+
+/* CONTAINER CENTRALIZADO */
+.login-container {
+    background:white;
+    padding:40px 30px 30px 30px;
+    border-radius:12px;
+    box-shadow:0 4px 15px rgba(0,0,0,0.2);
+    width:350px;
+    max-width:90%;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    position:relative;
+}
+
+/* FOTO/ÍCONE TOPO */
+.login-avatar {
+    width:100px;
+    height:100px;
+    border-radius:50%;
+    background:#6c5ce7 url('https://cdn-icons-png.flaticon.com/512/3135/3135715.png') center/cover no-repeat;
+    margin-bottom:20px;
+    border:4px solid white;
+}
+
+/* TÍTULO */
+.login-container h2 {
+    text-align:center;
+    margin-bottom:20px;
+    color:#2d3436;
+}
+
+/* INPUTS */
+.login-container input,
+.login-container select {
+    width:100%;
+    padding:12px;
+    margin:10px 0;
+    border-radius:6px;
+    border:1px solid #ccc;
+    font-size:14px;
+    box-sizing:border-box;
+}
+
+/* BOTÃO */
+.login-container button {
+    width:100%;
+    padding:12px;
+    margin-top:10px;
+    border:none;
+    border-radius:6px;
+    background:#6c5ce7;
+    color:white;
+    font-size:16px;
+    cursor:pointer;
+    transition:0.3s;
+}
+.login-container button:hover {
+    background:#a29bfe;
+}
+
+/* LINK ESQUECEU SENHA */
+.login-container .forgot {
+    margin-top:10px;
+    font-size:13px;
+    color:#0984e3;
+    text-decoration:none;
+}
+.login-container .forgot:hover {
+    text-decoration:underline;
+}
+
+/* MENSAGEM DE ERRO */
+.error {
+    color:red;
+    font-size:14px;
+    text-align:center;
+    margin-top:10px;
+    display:none;
+}
+
+/* RESPONSIVO */
+@media(max-width:400px){
+    .login-container { padding:30px 20px; }
+    .login-avatar { width:80px; height:80px; }
+}
+</style>
+</head>
+<body>
+
+<div class="login-container">
+    <div class="login-avatar"></div>
+    <h2>Login Farmácia+</h2>
+    <input type="text" id="username" placeholder="Usuário">
+    <input type="password" id="password" placeholder="Senha">
+    <select id="role">
+        <option value="visitante">Visitante</option>
+        <option value="enfermeiro">Enfermeiro</option>
+        <option value="chefe">Chefe</option>
+    </select>
+    <button onclick="login()">Entrar</button>
+    <a href="#" class="forgot">Esqueceu a senha?</a>
+    <div class="error" id="errorMsg">Usuário ou senha incorretos!</div>
+</div>
+
+<script>
+// Inicializa usuários no localStorage se não existir
+if(!localStorage.getItem('users')){
+    const defaultUsers = [
+        {username:'visitante', password:'123', role:'visitante'},
+        {username:'enfermeiro', password:'123', role:'enfermeiro'},
+        {username:'chefe', password:'123', role:'chefe'}
+    ];
+    localStorage.setItem('users', JSON.stringify(defaultUsers));
+}
+
+function login() {
+    const username = document.getElementById('username').value.trim();
+    const password = document.getElementById('password').value;
+    const role = document.getElementById('role').value;
+
+    const users = JSON.parse(localStorage.getItem('users')); 
+    const user = users.find(u => u.username === username && u.password === password && u.role === role);
+
+    if(user){
+        localStorage.setItem('currentUserRole', role); 
+        window.location.href = 'home.html'; 
+    } else {
+        document.getElementById('errorMsg').style.display = 'block';
+    }
+}
+</script>
+
+</body>
+</html>
