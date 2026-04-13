@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Farmácia Hospitalar - Medicamentos</title>
+
+<style>
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: #f5f6fa;
+}
+
+/* Sidebar */
+.sidebar {
+    width: 250px;
+    height: 100vh;
+    background: #6c5ce7;
+    color: white;
+    position: fixed;
+    padding: 20px;
+}
+
+.sidebar h2 {
+    margin-bottom: 20px;
+}
+
+.sidebar ul {
+    list-style: none;
+    padding: 0;
+}
+
+.sidebar ul li {
+    padding: 12px;
+    cursor: pointer;
+    border-radius: 8px;
+}
+
+.sidebar ul li:hover {
+    background: rgba(255,255,255,0.2);
+}
+
+/* Main */
+.main {
+    margin-left: 270px;
+    padding: 20px;
+}
+
+/* Tabela de medicamentos */
+.table {
+    background: white;
+    padding: 20px;
+    border-radius: 12px;
+    margin-bottom: 30px;
+    overflow-x: auto;
+}
+
+.table h2 {
+    margin-bottom: 15px;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+th, td {
+    padding: 12px;
+    border-bottom: 1px solid #ddd;
+    text-align: center;
+}
+
+.status {
+    padding: 5px 10px;
+    border-radius: 6px;
+    color: white;
+}
+
+.ok { background: green; }
+.low { background: orange; }
+.expired { background: red; }
+
+/* Gráfico de estoque */
+.chart-container {
+    background: white;
+    padding: 20px;
+    border-radius: 12px;
+    margin-bottom: 30px;
+}
+
+.chart-container h2 {
+    margin-bottom: 15px;
+}
+
+.bar-chart {
+    display: flex;
+    align-items: flex-end;
+    gap: 15px;
+    height: 300px;
+    margin-top: 20px;
+    padding-bottom: 20px;
+    border-left: 1px solid #ccc;
+    border-bottom: 1px solid #ccc;
+}
+
+.bar-chart div {
+    width: 50px;
+    background: #6c5ce7;
+    border-radius: 6px 6px 0 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    align-items: center;
+    color: white;
+    font-size: 14px;
+    transition: 0.3s;
+}
+
+.bar-chart div span {
+    margin-top: 5px;
+    color: black;
+    font-size: 12px;
+}
+
+/* Hover gráfico */
+.bar-chart div:hover {
+    background: #a29bfe;
+    cursor: pointer;
+}
+
+/* Medicamentos mais saídos */
+.table-out {
+    background: white;
+    padding: 20px;
+    border-radius: 12px;
+    overflow-x: auto;
+}
+
+.table-out h2 {
+    margin-bottom: 15px;
+}
+
+.table-out table th, .table-out table td {
+    text-align: center;
+}
+</style>
+</head>
+
+<body>
+
+<div class="sidebar">
+    <h2>Farmácia+</h2>
+    <ul>
+        <li>Dashboard</li>
+        <li>Medicamentos</li>
+        <li>Estoque</li>
+        <li>Entradas</li>
+        <li>Saídas</li>
+        <li>Relatórios</li>
+        <li>Validade</li>
+        <li>Configurações</li>
+        <li>Sair</li>
+    </ul>
+</div>
+
+<div class="main">
+    <h1>Medicamentos no Sistema</h1>
+
+    <!-- Tabela de todos os medicamentos -->
+    <div class="table">
+        <h2>Lista de Medicamentos</h2>
+        <table id="medTable">
+            <tr>
+                <th>Nome</th>
+                <th>Quantidade</th>
+                <th>Validade</th>
+                <th>Tipo</th>
+                <th>Status</th>
+            </tr>
+            <tr>
+                <td>Paracetamol</td>
+                <td>120</td>
+                <td>12/2026</td>
+                <td>Retalho</td>
+                <td><span class="status ok">Disponível</span></td>
+            </tr>
+            <tr>
+                <td>Amoxicilina</td>
+                <td>10</td>
+                <td>05/2025</td>
+                <td>Grosso</td>
+                <td><span class="status low">Baixo</span></td>
+            </tr>
+            <tr>
+                <td>Ibuprofeno</td>
+                <td>0</td>
+                <td>01/2024</td>
+                <td>Retalho</td>
+                <td><span class="status expired">Vencido</span></td>
+            </tr>
+            <tr>
+                <td>Dipirona</td>
+                <td>75</td>
+                <td>11/2025</td>
+                <td>Retalho</td>
+                <td><span class="status ok">Disponível</span></td>
+            </tr>
+            <tr>
+                <td>Cefalexina</td>
+                <td>50</td>
+                <td>09/2025</td>
+                <td>Grosso</td>
+                <td><span class="status low">Baixo</span></td>
+            </tr>
+        </table>
+    </div>
+
+    <!-- Gráfico grande de estoque -->
+    <div class="chart-container">
+        <h2>Gráfico de Estoque de Medicamentos</h2>
+        <div class="bar-chart" id="medChart"></div>
+    </div>
+
+    <!-- Medicamentos mais saídos -->
+    <div class="table-out">
+        <h2>Medicamentos Mais Saídos</h2>
+        <table id="mostOut">
+            <tr>
+                <th>Nome</th>
+                <th>Quantidade Saída</th>
+                <th>Data Saída</th>
+                <th>Tipo</th>
+                <th>Status Atual</th>
+            </tr>
+            <tr>
+                <td>Paracetamol</td>
+                <td>30</td>
+                <td>25/03/2026</td>
+                <td>Retalho</td>
+                <td><span class="status ok">Disponível</span></td>
+            </tr>
+            <tr>
+                <td>Amoxicilina</td>
+                <td>5</td>
+                <td>26/03/2026</td>
+                <td>Grosso</td>
+                <td><span class="status low">Baixo</span></td>
+            </tr>
+            <tr>
+                <td>Dipirona</td>
+                <td>20</td>
+                <td>24/03/2026</td>
+                <td>Retalho</td>
+                <td><span class="status ok">Disponível</span></td>
+            </tr>
+            <tr>
+                <td>Cefalexina</td>
+                <td>10</td>
+                <td>23/03/2026</td>
+                <td>Grosso</td>
+                <td><span class="status low">Baixo</span></td>
+            </tr>
+        </table>
+    </div>
+</div>
+
+<script>
+// Dados dos medicamentos
+let medicamentos = [
+    {nome: "Paracetamol", qtd: 120},
+    {nome: "Amoxicilina", qtd: 10},
+    {nome: "Ibuprofeno", qtd: 0},
+    {nome: "Dipirona", qtd: 75},
+    {nome: "Cefalexina", qtd: 50},
+    {nome: "Omeprazol", qtd: 90},
+    {nome: "Azitromicina", qtd: 35}
+];
+
+// Criar gráfico
+let chart = document.getElementById("medChart");
+medicamentos.forEach(med => {
+    let bar = document.createElement("div");
+    bar.style.height = (med.qtd * 2) + "px"; // multiplicador para visual maior
+    bar.innerHTML = `<span>${med.qtd}</span>${med.nome}`;
+    chart.appendChild(bar);
+});
+</script>
+
+</body>
+</html>

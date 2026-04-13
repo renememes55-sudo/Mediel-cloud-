@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sistema Hospitalar</title>
+
+<style>
+body {
+  margin: 0;
+  font-family: 'Segoe UI', sans-serif;
+  display: flex;
+  background: linear-gradient(135deg, #e0f2fe, #f0f9ff);
+}
+
+.sidebar {
+  width: 250px;
+  background: linear-gradient(180deg, #0c4a6e, #0369a1);
+  color: white;
+  height: 100vh;
+  padding: 20px;
+}
+
+.main {
+  flex: 1;
+  padding: 25px;
+}
+
+.box {
+  background: white;
+  padding: 20px;
+  border-radius: 14px;
+  margin-bottom: 20px;
+}
+
+input, select {
+  padding: 10px;
+  margin: 6px;
+  border-radius: 8px;
+  border: 1px solid #cbd5f5;
+}
+
+button {
+  padding: 10px 15px;
+  border: none;
+  border-radius: 8px;
+  background: #0284c7;
+  color: white;
+  cursor: pointer;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th {
+  background: #0284c7;
+  color: white;
+}
+
+th, td {
+  padding: 12px;
+}
+</style>
+</head>
+
+<body>
+
+<div class="sidebar">
+  <h2>🏥 Hospital</h2>
+</div>
+
+<div class="main">
+
+<div class="box">
+<h3>Cadastro</h3>
+
+<input id="nome" placeholder="Nome">
+<input id="codigo" placeholder="Código">
+
+<select id="tipoQtdCadastro" onchange="mudarOpcoesCadastro()">
+  <option value="">Tipo</option>
+  <option value="retalho">Retalho (Unidade)</option>
+  <option value="grosso">Grosso (Caixa)</option>
+</select>
+
+<select id="quantidadeCadastro" onchange="verificarCaixa()">
+  <option value="">Quantidade</option>
+</select>
+
+<div id="caixaExtraContainer" style="display:none; margin-top:6px;">
+  <input id="outraQtdCaixa" type="number" placeholder="Digite quantidade">
+  <button onclick="adicionarQtdExtra()">Adicionar</button>
+</div>
+
+<select id="unidadesPorCaixa" style="display:none; margin-top:6px;">
+  <option value="">Unidades por caixa</option>
+  <option value="10">10</option>
+  <option value="12">12</option>
+  <option value="20">20</option>
+  <option value="50">50</option>
+  <option value="100">100</option>
+  <option value="outro">Outro...</option>
+</select>
+
+<input id="validade" type="date">
+
+<button onclick="adicionarMedicamento()">Adicionar</button>
+</div>
+
+<div class="box">
+<h3>Movimentação</h3>
+<select id="medSelecionado"></select>
+<input id="quantMov" type="number" placeholder="Quantidade (unidades)">
+<select id="tipoMov">
+<option value="entrada">Entrada</option>
+<option value="saida">Saída</option>
+</select>
+<button onclick="registrarMovimento()">Registrar</button>
+</div>
+
+<div class="box">
+<h3>Estoque</h3>
+<table id="tabelaEstoque"></table>
+</div>
+
+<div class="box">
+<h3>Histórico</h3>
+<table id="tabelaMov"></table>
+</div>
+
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
+<script>
+const firebaseConfig = {
+  apiKey: "SUA_API_KEY",
+  authDomain: "SEU_AUTH_DOMAIN",
+  projectId: "SEU_PROJECT_ID"
+};
+
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+
+// 🔥 GERAR OPÇÕES
+function mudarOpcoesCadastro() {
+  const tipo = document.getElementById("tipoQtdCadastro").value;
+  const select = document.getElementById("quantidadeCadastro");
+  const caixa = document.getElementById("unidadesPorCaixa");
+  const extra = document.getElementById("caixaExtraContainer");
+
+  select.innerHTML = "<option value=''>Quantidade</option>";
+  caixa.style.display = "none";
+  extra.style.display = "none";
+
+  if(tipo === "retalho") {
+    for(let i = 1; i <= 20; i++) {
+      let opt = document.createElement("option");
+      opt.value = i;
+      opt.textContent = i + " unidade(s)";
+      select.appendChild(opt);
+    }
+  }
+
+  if(tipo === "grosso") {
+    for(let i = 1; i <= 20; i++) {
+      let opt = document.createElement("option");
+      opt.value = i;
+      opt.textContent = i + " caixa(s)";
+      select.appendChild(opt);
+    }
+    caixa.style.display = "inline-block";
+  }
+}
+
+// 🔥 MOSTRAR UNIDADES POR CAIXA
+function verificarCaixa() {
+  const unidadeSelect = document.getElementById("unidadesPorCaixa");
+  const extraContainer = document.getElementById("caixaExtraContainer");
+  const valor = unidadeSelect.value;
+
+  if(valor === "outro") {
+    extraContainer.style.display = "inline-block";
+    unidadeSelect.value = "";
+  }
+}
+
+// 🔥 ADICIONAR QUANTIDADE EXTRA
+function adicionarQtdExtra() {
+  const input = document.getElementById("outraQtdCaixa");
+  const select = document.getElementById("unidadesPorCaixa");
+  const valor = parseInt(input.value);
+
+  if(valor > 0) {
+    const opt = document.createElement("option");
+    opt.value = valor;
+    opt.textContent = valor;
+    select.appendChild(opt);
+    select.value = valor;
+    document.getElementById("caixaExtraContainer").style.display = "none";
+    input.value = "";
+  } else {
+    alert("Digite um valor válido");
+  }
+}
+
+// ADICIONAR MEDICAMENTO
+async function adicionarMedicamento() {
+  const nome = document.getElementById("nome").value;
+  const codigo = document.getElementById("codigo").value;
+  const tipo = document.getElementById("tipoQtdCadastro").value;
+  let quantidade = parseInt(document.getElementById("quantidadeCadastro").value);
+  const unidadesCaixa = parseInt(document.getElementById("unidadesPorCaixa").value);
+  const validade = document.getElementById("validade").value;
+
+  if(!nome || !codigo || !tipo || !quantidade || !validade) {
+    alert("Preencha tudo");
+    return;
+  }
+
+  if(tipo === "grosso") {
+    if(!unidadesCaixa) {
+      alert("Escolha unidades por caixa");
+      return;
+    }
+    quantidade = quantidade * unidadesCaixa;
+  }
+
+  await db.collection("medicamentos").doc(codigo).set({ nome, codigo }, { merge: true });
+
+  await db.collection("medicamentos").doc(codigo).collection("lotes").add({
+    quantidade,
+    validade
+  });
+
+  alert("Adicionado!");
+  atualizarMedicamentos();
+}
+
+// ATUALIZAR ESTOQUE
+async function atualizarMedicamentos() {
+  const tabela = document.getElementById("tabelaEstoque");
+  const select = document.getElementById("medSelecionado");
+
+  tabela.innerHTML = "<tr><th>Nome</th><th>Código</th><th>Qtd</th></tr>";
+  select.innerHTML = "<option value=''>Selecione</option>";
+
+  const snapshot = await db.collection("medicamentos").get();
+
+  for(const doc of snapshot.docs) {
+    const med = doc.data();
+
+    const opt = document.createElement("option");
+    opt.value = med.codigo;
+    opt.textContent = med.nome;
+    select.appendChild(opt);
+
+    const lotes = await db.collection("medicamentos").doc(med.codigo).collection("lotes").get();
+    let total = 0;
+    lotes.forEach(l => total += l.data().quantidade);
+
+    const row = tabela.insertRow();
+    row.insertCell(0).innerText = med.nome;
+    row.insertCell(1).innerText = med.codigo;
+    row.insertCell(2).innerText = total;
+  }
+
+  atualizarMovimentacoes();
+}
+
+// MOVIMENTAÇÃO
+async function registrarMovimento() {
+  const codigo = document.getElementById("medSelecionado").value;
+  const quantidade = parseInt(document.getElementById("quantMov").value);
+  const tipo = document.getElementById("tipoMov").value;
+
+  if(!codigo || !quantidade) {
+    alert("Preencha os dados");
+    return;
+  }
+
+  const medRef = db.collection("medicamentos").doc(codigo);
+  const lotes = await medRef.collection("lotes").get();
+
+  for(const lote of lotes.docs) {
+    const atual = lote.data().quantidade;
+
+    if(tipo === "entrada") {
+      await lote.ref.update({ quantidade: atual + quantidade });
+      break;
+    } else {
+      if(atual >= quantidade) {
+        await lote.ref.update({ quantidade: atual - quantidade });
+        break;
+      }
+    }
+  }
+
+  await db.collection("movimentacoes").add({
+    nome: codigo,
+    tipo,
+    quantidade,
+    data: new Date().toISOString().split('T')[0]
+  });
+
+  atualizarMedicamentos();
+}
+
+// HISTÓRICO
+async function atualizarMovimentacoes() {
+  const tabela = document.getElementById("tabelaMov");
+  tabela.innerHTML = "<tr><th>Nome</th><th>Tipo</th><th>Qtd</th><th>Data</th></tr>";
+
+  const snapshot = await db.collection("movimentacoes").get();
+  snapshot.forEach(doc => {
+    const m = doc.data();
+    const row = tabela.insertRow();
+    row.insertCell(0).innerText = m.nome;
+    row.insertCell(1).innerText = m.tipo;
+    row.insertCell(2).innerText = m.quantidade;
+    row.insertCell(3).innerText = m.data;
+  });
+}
+
+atualizarMedicamentos();
+</script>
+
+</body>
+</html>

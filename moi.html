@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Farmácia Hospitalar</title>
+
+<style>
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: #f5f6fa;
+}
+
+/* Sidebar */
+.sidebar {
+    width: 250px;
+    height: 100vh;
+    background: #6c5ce7;
+    color: white;
+    position: fixed;
+    padding: 20px;
+}
+
+.sidebar h2 {
+    margin-bottom: 20px;
+}
+
+.sidebar ul {
+    list-style: none;
+    padding: 0;
+}
+
+.sidebar ul li {
+    padding: 12px;
+    cursor: pointer;
+    border-radius: 8px;
+}
+
+.sidebar ul li:hover {
+    background: rgba(255,255,255,0.2);
+}
+
+/* Main */
+.main {
+    margin-left: 270px;
+    padding: 20px;
+}
+
+/* Cards */
+.cards {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 15px;
+}
+
+.card {
+    background: white;
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+}
+
+.card h3 {
+    margin: 0;
+    font-size: 14px;
+    color: gray;
+}
+
+.card p {
+    font-size: 22px;
+    margin: 5px 0;
+}
+
+.green { color: green; }
+.red { color: red; }
+
+/* Assistant */
+.assistant {
+    margin-top: 20px;
+    padding: 20px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #a29bfe, #6c5ce7);
+    color: white;
+}
+
+/* Chart */
+.chart {
+    margin-top: 20px;
+    background: white;
+    padding: 20px;
+    border-radius: 12px;
+}
+
+.bar {
+    height: 120px;
+    display: flex;
+    align-items: flex-end;
+    gap: 8px;
+}
+
+.bar div {
+    width: 20px;
+    background: #6c5ce7;
+    border-radius: 4px;
+}
+
+/* Table */
+.table {
+    margin-top: 20px;
+    background: white;
+    padding: 20px;
+    border-radius: 12px;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+td, th {
+    padding: 10px;
+    border-bottom: 1px solid #ddd;
+}
+
+.status {
+    padding: 5px 10px;
+    border-radius: 6px;
+    color: white;
+}
+
+.ok { background: green; }
+.low { background: orange; }
+.expired { background: red; }
+.input-buttons {
+    margin-top: 20px;
+    display: flex;
+    gap: 10px;
+}
+.input-buttons button {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 6px;
+    background: #6c5ce7;
+    color: white;
+    cursor: pointer;
+}
+.input-buttons button:hover {
+    background: #a29bfe;
+}
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 100;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background: rgba(0,0,0,0.5);
+}
+.modal-content {
+    background: white;
+    margin: 10% auto;
+    padding: 20px;
+    border-radius: 12px;
+    width: 300px;
+}
+.modal-content input, .modal-content select {
+    width: 100%;
+    padding: 8px;
+    margin: 10px 0;
+}
+</style>
+</head>
+
+<body>
+<div class="sidebar">
+    <h2>Farmácia+</h2>
+    <ul>
+        <li>Dashboard</li>
+        <li><a href="medicamento.html" style="color: white; text-decoration: none;">Medicamentos</a></li>
+        <li>Estoque</li>
+        <li>Entradas</li>
+        <li>Saídas</li>
+        <li>Relatórios</li>
+        <li>Validade</li>
+        <li>Configurações</li>
+        <li>Sair</li>
+    </ul>
+</div>
+<div class="main">
+
+    <h1>Gestão de Medicamentos</h1>
+
+    <!-- Cards -->
+    <div class="cards">
+        <div class="card">
+            <h3>Total de Medicamentos</h3>
+            <p id="total">320</p>
+            <span class="green">+5%</span>
+        </div>
+
+        <div class="card">
+            <h3>Baixo estoque</h3>
+            <p id="lowStock">25</p>
+            <span class="red">Atenção</span>
+        </div>
+
+        <div class="card">
+            <h3>Próx. a vencer</h3>
+            <p id="expiring">18</p>
+            <span class="red">Urgente</span>
+        </div>
+
+        <div class="card">
+            <h3>Saídas hoje</h3>
+            <p id="out">54</p>
+            <span class="green">+2%</span>
+        </div>
+    </div>
+
+    <!-- Assistant -->
+    <div class="assistant">
+        <h2>Sistema Farmacêutico 💊</h2>
+        <p>Controle total de medicamentos do hospital</p>
+    </div>
+
+    <!-- Chart -->
+    <div class="chart">
+        <h3>Consumo mensal de medicamentos</h3>
+        <div class="bar" id="chart"></div>
+    </div>
+
+    <!-- Tabela de Medicamentos -->
+    <div class="table">
+        <h3>Lista de Medicamentos</h3>
+        <table id="medicamentosTable">
+            <tr>
+                <th>Nome</th>
+                <th>Quantidade</th>
+                <th>Validade</th>
+                <th>Status</th>
+            </tr>
+            <tr>
+                <td>Paracetamol</td>
+                <td>120</td>
+                <td>12/2026</td>
+                <td><span class="status ok">Disponível</span></td>
+            </tr>
+            <tr>
+                <td>Amoxicilina</td>
+                <td>10</td>
+                <td>05/2025</td>
+                <td><span class="status low">Baixo</span></td>
+            </tr>
+            <tr>
+                <td>Ibuprofeno</td>
+                <td>0</td>
+                <td>01/2024</td>
+                <td><span class="status expired">Vencido</span></td>
+            </tr>
+        </table>
+    </div>
+
+    <!-- Botões de Entrada/Saída -->
+    <div class="input-buttons">
+        <button onclick="abrirModal('add')">Adicionar Medicamento</button>
+        <button onclick="abrirModal('remove')">Remover Medicamento</button>
+    </div>
+
+    <!-- Modal -->
+    <div id="modal" class="modal">
+        <div class="modal-content">
+            <h3 id="modalTitle"></h3>
+            <input type="text" id="nome" placeholder="Nome do Medicamento">
+            <input type="number" id="quantidade" placeholder="Quantidade">
+            <select id="tipo">
+                <option value="Retalho">Retalho</option>
+                <option value="Grosso">Grosso</option>
+            </select>
+            <button onclick="confirmar()">Confirmar</button>
+            <button onclick="document.getElementById('modal').style.display='none'">Cancelar</button>
+        </div>
+    </div>
+
+    <!-- Histórico -->
+    <div class="table" style="margin-top:20px;">
+        <h3>Histórico de Movimentações</h3>
+        <table id="historico">
+            <tr>
+                <th>Tipo</th>
+                <th>Medicamento</th>
+                <th>Quantidade</th>
+                <th>Detalhes</th>
+                <th>Data/Hora</th>
+            </tr>
+        </table>
+    </div>
+
+</div>
+
+<script>
+// Gráfico
+let data = [50, 80, 40, 90, 60, 100, 30, 70, 85, 60, 75, 95];
+let chart = document.getElementById("chart");
+data.forEach(value => {
+    let bar = document.createElement("div");
+    bar.style.height = value + "px";
+    chart.appendChild(bar);
+});
+
+// Atualização dinâmica
+setInterval(() => {
+    document.getElementById("total").innerText = Math.floor(Math.random() * 500);
+    document.getElementById("lowStock").innerText = Math.floor(Math.random() * 50);
+    document.getElementById("expiring").innerText = Math.floor(Math.random() * 30);
+}, 4000);
+
+// Modal
+let modo = "add";
+function abrirModal(tipo){
+    modo = tipo;
+    document.getElementById("modalTitle").innerText = tipo === "add" ? "Adicionar Medicamento" : "Remover Medicamento";
+    document.getElementById("nome").value = "";
+    document.getElementById("quantidade").value = "";
+    document.getElementById("modal").style.display = "block";
+}
+
+// Confirmar Entrada/Saída e registrar histórico
+function confirmar(){
+    let nome = document.getElementById("nome").value;
+    let quantidade = parseInt(document.getElementById("quantidade").value);
+    let tipoMov = document.getElementById("tipo").value;
+
+    if(!nome || !quantidade) return alert("Preencha todos os campos!");
+
+    let tabela = document.getElementById("medicamentosTable");
+    let linhas = tabela.rows;
+    let encontrado = false;
+
+    for(let i = 1; i < linhas.length; i++){
+        if(linhas[i].cells[0].innerText.toLowerCase() === nome.toLowerCase()){
+            let atual = parseInt(linhas[i].cells[1].innerText);
+
+            if(modo === "add"){
+                linhas[i].cells[1].innerText = atual + quantidade;
+            } else {
+                linhas[i].cells[1].innerText = Math.max(0, atual - quantidade);
+            }
+            encontrado = true;
+        }
+    }
+
+    if(!encontrado && modo === "add"){
+        let nova = tabela.insertRow();
+        nova.insertCell(0).innerText = nome;
+        nova.insertCell(1).innerText = quantidade;
+        nova.insertCell(2).innerText = "--";
+        nova.insertCell(3).innerHTML = '<span class="status ok">Disponível</span>';
+    }
+
+    // Registrar no histórico
+    let hist = document.getElementById("historico");
+    let novaLinha = hist.insertRow();
+    let dataHora = new Date().toLocaleString();
+    novaLinha.insertCell(0).innerText = modo === "add" ? "Entrada" : "Saída";
+    novaLinha.insertCell(1).innerText = nome;
+    novaLinha.insertCell(2).innerText = quantidade;
+    novaLinha.insertCell(3).innerText = tipoMov;
+    novaLinha.insertCell(4).innerText = dataHora;
+
+    document.getElementById("modal").style.display = "none";
+}
+</script>
+
+</body>
+</html>

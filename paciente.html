@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gestão de Pacientes</title>
+<style>
+body {
+  margin: 0;
+  font-family: 'Segoe UI', sans-serif;
+  background: linear-gradient(135deg, #e0f2fe, #f0f9ff);
+  padding: 20px;
+}
+
+/* HEADER */
+.header {
+  background: white;
+  padding: 20px;
+  border-radius: 12px;
+  margin-bottom: 20px;
+  border-left: 6px solid #0284c7;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+  text-align: center;
+}
+
+/* CARDS */
+.cards {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 18px;
+  margin-bottom: 20px;
+}
+
+.card {
+  background: linear-gradient(135deg, #0284c7, #0369a1);
+  color: white;
+  padding: 20px;
+  border-radius: 14px;
+  box-shadow: 0 8px 20px rgba(2,132,199,0.25);
+  text-align: center;
+}
+
+.card h3 {
+  margin: 0;
+  font-size: 14px;
+  opacity: 0.9;
+}
+
+.card p {
+  font-size: 22px;
+  font-weight: bold;
+  margin-top: 10px;
+}
+
+/* BOX */
+.box {
+  background: white;
+  padding: 20px;
+  border-radius: 14px;
+  margin-bottom: 20px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+}
+
+/* INPUTS */
+input, select {
+  padding: 10px;
+  margin: 6px;
+  border-radius: 8px;
+  border: 1px solid #cbd5f5;
+  outline: none;
+}
+
+input:focus, select:focus {
+  border-color: #0284c7;
+}
+
+/* BUTTON */
+button {
+  padding: 10px 15px;
+  border: none;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #0284c7, #0369a1);
+  color: white;
+  cursor: pointer;
+}
+
+button:hover {
+  opacity: 0.9;
+}
+
+/* TABLE */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+th {
+  background: #0284c7;
+  color: white;
+}
+
+th, td {
+  padding: 12px;
+}
+
+tr:nth-child(even) {
+  background: #f0f9ff;
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h2>Gestão de Pacientes</h2>
+</div>
+
+<!-- CARDS DE ÁREAS -->
+<div class="cards">
+  <div class="card">
+    <h3>Medicina</h3>
+    <p id="medicinaCount">0</p>
+  </div>
+  <div class="card">
+    <h3>UCI</h3>
+    <p id="uciCount">0</p>
+  </div>
+  <div class="card">
+    <h3>Cirurgia</h3>
+    <p id="cirurgiaCount">0</p>
+  </div>
+  <div class="card">
+    <h3>Ortopedia</h3>
+    <p id="ortopediaCount">0</p>
+  </div>
+</div>
+
+<!-- CADASTRO DE PACIENTES -->
+<div class="box">
+  <h3>Cadastro de Paciente</h3>
+  <input id="nomePaciente" placeholder="Nome do paciente">
+  <select id="areaPaciente">
+    <option value="">Selecione a área</option>
+    <option value="Medicina">Medicina</option>
+    <option value="UCI">UCI</option>
+    <option value="Cirurgia">Cirurgia</option>
+    <option value="Ortopedia">Ortopedia</option>
+  </select>
+  <input id="diasInternacao" type="number" placeholder="Dias de internação">
+  <input id="medicamentoPaciente" placeholder="Medicamento">
+  <input id="valorMedicamento" type="number" placeholder="Valor por dia (Kz)">
+  <button onclick="adicionarPaciente()">Adicionar Paciente</button>
+</div>
+
+<!-- TABELA DE PACIENTES -->
+<div class="box">
+  <h3>Pacientes</h3>
+  <input id="filtroPaciente" placeholder="Pesquisar..." oninput="filtrarPacientes()">
+  <table id="tabelaPacientes">
+    <tr>
+      <th>Nome</th>
+      <th>Área</th>
+      <th>Dias</th>
+      <th>Medicamento</th>
+      <th>Valor diário (Kz)</th>
+      <th>Total (Kz)</th>
+    </tr>
+  </table>
+</div>
+
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
+<script>
+const firebaseConfig = {
+  apiKey: "SUA_API_KEY",
+  authDomain: "SEU_AUTH_DOMAIN",
+  projectId: "SEU_PROJECT_ID"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+
+// ADICIONAR PACIENTE
+async function adicionarPaciente() {
+  const nome = document.getElementById("nomePaciente").value;
+  const area = document.getElementById("areaPaciente").value;
+  const dias = parseInt(document.getElementById("diasInternacao").value);
+  const medicamento = document.getElementById("medicamentoPaciente").value;
+  const valor = parseFloat(document.getElementById("valorMedicamento").value);
+
+  if(!nome || !area || !dias || !medicamento || !valor) return alert("Preencha todos os campos");
+
+  await db.collection("pacientes").add({
+    nome, area, dias, medicamento, valor, total: dias * valor
+  });
+
+  atualizarPacientes();
+}
+
+// ATUALIZAR PACIENTES
+async function atualizarPacientes() {
+  const tabela = document.getElementById("tabelaPacientes");
+  tabela.innerHTML = "<tr><th>Nome</th><th>Área</th><th>Dias</th><th>Medicamento</th><th>Valor diário (Kz)</th><th>Total (Kz)</th></tr>";
+
+  const snapshot = await db.collection("pacientes").get();
+
+  let medicina = 0, uci = 0, cirurgia = 0, ortopedia = 0;
+
+  snapshot.forEach(doc => {
+    const p = doc.data();
+    const row = tabela.insertRow();
+    row.insertCell(0).innerText = p.nome;
+    row.insertCell(1).innerText = p.area;
+    row.insertCell(2).innerText = p.dias;
+    row.insertCell(3).innerText = p.medicamento;
+    row.insertCell(4).innerText = p.valor;
+    row.insertCell(5).innerText = p.total;
+
+    // Contagem por área
+    if(p.area === "Medicina") medicina++;
+    if(p.area === "UCI") uci++;
+    if(p.area === "Cirurgia") cirurgia++;
+    if(p.area === "Ortopedia") ortopedia++;
+  });
+
+  document.getElementById("medicinaCount").innerText = medicina;
+  document.getElementById("uciCount").innerText = uci;
+  document.getElementById("cirurgiaCount").innerText = cirurgia;
+  document.getElementById("ortopediaCount").innerText = ortopedia;
+}
+
+// FILTRO
+function filtrarPacientes() {
+  const filtro = document.getElementById("filtroPaciente").value.toLowerCase();
+  const tabela = document.getElementById("tabelaPacientes");
+
+  for(let i = 1; i < tabela.rows.length; i++) {
+    const nome = tabela.rows[i].cells[0].innerText.toLowerCase();
+    tabela.rows[i].style.display = nome.includes(filtro) ? "" : "none";
+  }
+}
+
+atualizarPacientes();
+</script>
+</body>
+</html>

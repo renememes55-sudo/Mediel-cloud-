@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Controle de Medicamentos</title>
+  <style>
+    /* Reset e fontes */
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Arial', sans-serif; }
+    body { background: #f4f7fa; color: #333; }
+    header { background: #1E90FF; color: white; padding: 15px 30px; display: flex; align-items: center; justify-content: space-between; }
+    header h1 { font-size: 22px; }
+    nav ul { list-style: none; display: flex; gap: 20px; }
+    nav ul li { cursor: pointer; }
+    nav ul li:hover { text-decoration: underline; }
+    .profile { display: flex; align-items: center; gap: 10px; }
+    .profile img { width: 35px; height: 35px; border-radius: 50%; }
+
+    main { padding: 20px 30px; }
+    .dashboard-cards { display: flex; gap: 20px; margin-bottom: 30px; flex-wrap: wrap; }
+    .card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.1); flex: 1; min-width: 180px; text-align: center; }
+    .card.alert { border-left: 5px solid #FF6347; }
+
+    table { width: 100%; border-collapse: collapse; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 6px rgba(0,0,0,0.1); margin-bottom: 30px; }
+    th, td { padding: 12px 15px; text-align: left; }
+    th { background: #1E90FF; color: white; position: sticky; top: 0; }
+    tr:nth-child(even) { background: #f9f9f9; }
+    .btn { padding: 5px 10px; border: none; border-radius: 5px; cursor: pointer; }
+    .btn.edit { background: #2E8B57; color: white; }
+    .btn.delete { background: #FF6347; color: white; }
+    .status { padding: 4px 8px; border-radius: 5px; color: white; font-size: 12px; text-align: center; display: inline-block; }
+    .status.active { background: #2E8B57; }
+    .status.low { background: #FFA500; }
+    .status.completed { background: #1E90FF; }
+
+    .charts { display: flex; gap: 20px; flex-wrap: wrap; }
+    .chart-container { background: white; padding: 20px; border-radius: 8px; flex: 1; min-width: 300px; box-shadow: 0 2px 6px rgba(0,0,0,0.1); }
+    canvas { width: 100% !important; height: 250px !important; }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>HospitalMedic</h1>
+  <nav>
+    <ul>
+      <li>Dashboard</li>
+      <li>Medicações</li>
+      <li>Estoque</li>
+      <li>Relatórios</li>
+      <li>Configurações</li>
+    </ul>
+  </nav>
+  <div class="profile">
+    <span>Dr. Ana Silva</span>
+    <img src="https://i.pravatar.cc/35" alt="Perfil">
+  </div>
+</header>
+
+<main>
+  <!-- Dashboard Cards -->
+  <div class="dashboard-cards">
+    <div class="card">Prescrições Ativas<br><strong>32</strong></div>
+    <div class="card">Medicamentos em Baixo Estoque<br><strong>8</strong></div>
+    <div class="card">Administrações Hoje<br><strong>15</strong></div>
+    <div class="card alert">Alertas<br><strong>3</strong></div>
+  </div>
+
+  <!-- Tabela de Medicamentos -->
+  <table>
+    <thead>
+      <tr>
+        <th>Nome</th>
+        <th>Paciente</th>
+        <th>Dosagem</th>
+        <th>Frequência</th>
+        <th>Status</th>
+        <th>Ações</th>
+      </tr>
+    </thead>
+    <tbody id="med-table">
+      <tr>
+        <td>Paracetamol</td>
+        <td>João Pereira</td>
+        <td>500 mg</td>
+        <td>3x Dia</td>
+        <td><span class="status active">Ativo</span></td>
+        <td><button class="btn edit">Editar</button> <button class="btn delete">Excluir</button></td>
+      </tr>
+      <tr>
+        <td>Metformina</td>
+        <td>Maria Souza</td>
+        <td>850 mg</td>
+        <td>2x Dia</td>
+        <td><span class="status low">Baixo Estoque</span></td>
+        <td><button class="btn edit">Editar</button> <button class="btn delete">Excluir</button></td>
+      </tr>
+      <tr>
+        <td>Amoxicilina</td>
+        <td>Carlos Lima</td>
+        <td>250 mg</td>
+        <td>1x Dia</td>
+        <td><span class="status completed">Completo</span></td>
+        <td><button class="btn edit">Editar</button> <button class="btn delete">Excluir</button></td>
+      </tr>
+      <tr>
+        <td>Omeprazol</td>
+        <td>Ana Torres</td>
+        <td>20 mg</td>
+        <td>1x Dia</td>
+        <td><span class="status active">Ativo</span></td>
+        <td><button class="btn edit">Editar</button> <button class="btn delete">Excluir</button></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- Gráficos -->
+  <div class="charts">
+    <div class="chart-container">
+      <canvas id="adminChart"></canvas>
+    </div>
+    <div class="chart-container">
+      <canvas id="expiryChart"></canvas>
+    </div>
+  </div>
+</main>
+
+<!-- JavaScript -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+  // Gráfico Administrações
+  const ctx1 = document.getElementById('adminChart').getContext('2d');
+  const adminChart = new Chart(ctx1, {
+    type: 'line',
+    data: {
+      labels: ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'],
+      datasets: [{
+        label: 'Administrações',
+        data: [12, 19, 14, 15, 10, 20, 15],
+        backgroundColor: 'rgba(30,144,255,0.2)',
+        borderColor: 'rgba(30,144,255,1)',
+        borderWidth: 2,
+        fill: true,
+        tension: 0.3
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { display: false } },
+      scales: { y: { beginAtZero: true } }
+    }
+  });
+
+  // Gráfico Validade
+  const ctx2 = document.getElementById('expiryChart').getContext('2d');
+  const expiryChart = new Chart(ctx2, {
+    type: 'doughnut',
+    data: {
+      labels: ['Válidos', 'Próximos', 'Vencidos'],
+      datasets: [{
+        data: [65, 20, 15],
+        backgroundColor: ['#1E90FF', '#FFA500', '#FF6347']
+      }]
+    },
+    options: { responsive: true, plugins: { legend: { position: 'bottom' } } }
+  });
+</script>
+
+</body>
+</html>

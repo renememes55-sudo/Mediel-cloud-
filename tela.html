@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sistema Avançado de Gestão de Medicamentos</title>
+
+<style>
+body {
+  margin: 0;
+  font-family: 'Segoe UI', sans-serif;
+  display: flex;
+  background: #f4f6f9;
+}
+
+/* SIDEBAR */
+.sidebar {
+  width: 240px;
+  background: #111827;
+  color: white;
+  height: 100vh;
+  padding: 20px;
+}
+
+.sidebar h2 {
+  text-align: center;
+}
+
+.sidebar a {
+  display: block;
+  padding: 12px;
+  margin: 5px 0;
+  color: #cbd5e1;
+  text-decoration: none;
+  border-radius: 6px;
+}
+
+.sidebar a:hover {
+  background: #1f2937;
+  color: white;
+}
+
+/* MAIN */
+.main {
+  flex: 1;
+  padding: 20px;
+}
+
+/* CARDS */
+.cards {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 15px;
+  margin-bottom: 20px;
+}
+
+.card {
+  background: white;
+  padding: 15px;
+  border-radius: 10px;
+}
+
+/* BOX */
+.box {
+  background: white;
+  padding: 15px;
+  border-radius: 10px;
+  margin-bottom: 20px;
+}
+
+/* INPUTS */
+input, select {
+  padding: 8px;
+  margin: 5px;
+}
+
+/* BOTÕES */
+button {
+  padding: 8px;
+  border: none;
+  border-radius: 6px;
+  background: #22c55e;
+  color: white;
+  cursor: pointer;
+}
+
+/* TABELA */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 10px;
+}
+
+th, td {
+  padding: 10px;
+  border-bottom: 1px solid #ddd;
+}
+
+th {
+  background: #f1f5f9;
+}
+
+/* ALERTAS */
+.alert-red { background-color: #f8d7da; }
+.alert-yellow { background-color: #fff3cd; }
+
+</style>
+</head>
+
+<body>
+
+<!-- MENU -->
+<div class="sidebar">
+  <h2>🏥 Hospital</h2>
+  <a href="#">Dashboard</a>
+  <a href="#">Medicamentos</a>
+  <a href="#">Movimentações</a>
+</div>
+
+<!-- CONTEÚDO -->
+<div class="main">
+
+<h1>Sistema Avançado de Gestão de Medicamentos</h1>
+
+<!-- CARDS -->
+<div class="cards">
+  <div class="card">Total Medicamentos</div>
+  <div class="card">Próximos a vencer</div>
+  <div class="card">Movimentações</div>
+</div>
+
+<!-- CADASTRO -->
+<div class="box">
+<h2>Cadastro de Medicamento</h2>
+<input type="text" id="nome" placeholder="Nome do Medicamento">
+<input type="text" id="codigo" placeholder="Código">
+<input type="number" id="quantidade" placeholder="Quantidade">
+<input type="date" id="validade">
+<button onclick="adicionarMedicamento()">Adicionar Lote</button>
+</div>
+
+<!-- MOVIMENTAÇÃO -->
+<div class="box">
+<h2>Movimentações</h2>
+<select id="medSelecionado"></select>
+<input type="number" id="quantMov" placeholder="Quantidade">
+<select id="tipoMov">
+  <option value="entrada">Entrada</option>
+  <option value="saida">Saída</option>
+</select>
+<button onclick="registrarMovimento()">Registrar</button>
+</div>
+
+<!-- ESTOQUE -->
+<div class="box">
+<h2>Estoque Atual</h2>
+<input type="text" id="filtroBusca" placeholder="Pesquisar..." oninput="filtrarEstoque()">
+
+<table id="tabelaEstoque">
+<tr>
+<th>Medicamento</th>
+<th>Código</th>
+<th>Quantidade</th>
+<th>Validade</th>
+<th>Lotes</th>
+</tr>
+</table>
+</div>
+
+<!-- HISTÓRICO -->
+<div class="box">
+<h2>Histórico</h2>
+<table id="tabelaMov">
+<tr>
+<th>Medicamento</th>
+<th>Tipo</th>
+<th>Quantidade</th>
+<th>Data</th>
+<th>Validade</th>
+</tr>
+</table>
+</div>
+
+</div>
+
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
+<script>
+// (SEU CÓDIGO ORIGINAL - NÃO ALTERADO)
+
+const firebaseConfig = {
+  apiKey: "SUA_API_KEY",
+  authDomain: "SEU_AUTH_DOMAIN",
+  projectId: "SEU_PROJECT_ID",
+};
+
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+
+async function adicionarMedicamento() {
+  const nome = document.getElementById("nome").value;
+  const codigo = document.getElementById("codigo").value;
+  const quantidade = parseInt(document.getElementById("quantidade").value);
+  const validade = document.getElementById("validade").value;
+
+  if(!nome || !codigo || !quantidade || !validade) { alert("Preencha todos os campos"); return; }
+
+  await db.collection("medicamentos").doc(codigo).set({ nome, codigo }, { merge: true });
+  await db.collection("medicamentos").doc(codigo).collection("lotes").add({ quantidade, validade });
+
+  atualizarMedicamentos();
+}
+
+async function atualizarMedicamentos() {
+  const medSelect = document.getElementById("medSelecionado");
+  medSelect.innerHTML = "";
+  const tabela = document.getElementById("tabelaEstoque");
+  tabela.innerHTML = `<tr><th>Medicamento</th><th>Código</th><th>Quantidade</th><th>Validade</th><th>Lotes</th></tr>`;
+
+  const snapshot = await db.collection("medicamentos").get();
+  for(const doc of snapshot.docs) {
+    const med = doc.data();
+    const option = document.createElement("option");
+    option.value = med.codigo;
+    option.text = med.nome;
+    medSelect.add(option);
+
+    const lotesSnap = await db.collection("medicamentos").doc(med.codigo).collection("lotes").get();
+    let totalQtd = 0;
+    let validadeMaisProx = null;
+    let detalhes = "";
+    lotesSnap.forEach(lote => {
+      const l = lote.data();
+      totalQtd += l.quantidade;
+      detalhes += `${l.quantidade} - ${l.validade} \n`;
+      if(!validadeMaisProx || l.validade < validadeMaisProx) validadeMaisProx = l.validade;
+    });
+
+    const row = tabela.insertRow();
+    row.insertCell(0).innerText = med.nome;
+    row.insertCell(1).innerText = med.codigo;
+    row.insertCell(2).innerText = totalQtd;
+    row.insertCell(3).innerText = validadeMaisProx;
+    row.insertCell(4).innerText = detalhes;
+
+    if(validadeMaisProx && new Date(validadeMaisProx) - new Date() < 30*24*60*60*1000) {
+      row.classList.add("alert-red");
+    }
+  }
+
+  atualizarMovimentacoes();
+}
+
+async function registrarMovimento() {
+  const codigo = document.getElementById("medSelecionado").value;
+  const quantidade = parseInt(document.getElementById("quantMov").value);
+  const tipo = document.getElementById("tipoMov").value;
+
+  const medRef = db.collection("medicamentos").doc(codigo);
+  const medDoc = await medRef.get();
+
+  if(tipo === "saida") {
+    const lotesSnap = await medRef.collection("lotes").orderBy("validade").get();
+    let qtdRestante = quantidade;
+    for(const lote of lotesSnap.docs) {
+      const l = lote.data();
+      if(l.quantidade >= qtdRestante) {
+        await lote.ref.update({ quantidade: l.quantidade - qtdRestante });
+        break;
+      } else {
+        qtdRestante -= l.quantidade;
+        await lote.ref.update({ quantidade: 0 });
+      }
+    }
+  }
+
+  await db.collection("movimentacoes").add({
+    medicamentoId: codigo,
+    nome: medDoc.data().nome,
+    tipo,
+    quantidade,
+    data: new Date().toISOString().split('T')[0]
+  });
+
+  atualizarMedicamentos();
+}
+
+async function atualizarMovimentacoes() {
+  const tabelaMov = document.getElementById("tabelaMov");
+  tabelaMov.innerHTML = `<tr><th>Medicamento</th><th>Tipo</th><th>Quantidade</th><th>Data</th><th>Validade</th></tr>`;
+  const snapshot = await db.collection("movimentacoes").get();
+  snapshot.forEach(doc => {
+    const mov = doc.data();
+    const row = tabelaMov.insertRow();
+    row.insertCell(0).innerText = mov.nome;
+    row.insertCell(1).innerText = mov.tipo;
+    row.insertCell(2).innerText = mov.quantidade;
+    row.insertCell(3).innerText = mov.data;
+    row.insertCell(4).innerText = "-";
+  });
+}
+
+function filtrarEstoque() {
+  const filtro = document.getElementById("filtroBusca").value.toLowerCase();
+  const tabela = document.getElementById("tabelaEstoque");
+  for(let i = 1; i < tabela.rows.length; i++) {
+    const nome = tabela.rows[i].cells[0].innerText.toLowerCase();
+    tabela.rows[i].style.display = nome.includes(filtro) ? "" : "none";
+  }
+}
+
+atualizarMedicamentos();
+</script>
+
+</body>
+</html>
